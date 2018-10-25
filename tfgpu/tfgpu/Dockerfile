@@ -108,7 +108,8 @@ RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
     && sudo $CONDA_DIR/bin/python setup.py install \
     && cd $HOME \
     && mkdir -p $HOME/.local \
-    && sudo rm -rf supervisor
+    && sudo rm -rf supervisor \
+    && echo ". /opt/conda/etc/profile.d/conda.sh" >> $HOME/.bashrc
 
 ENV SV_PASSWORD "tiger"
 ENV GEN_CERT 1
