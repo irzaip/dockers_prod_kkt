@@ -92,10 +92,10 @@ RUN cd /tmp \
 RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && $CONDA_DIR/bin/conda config --add channels conda-forge \
     && $CONDA_DIR/bin/conda install --yes \
-    tensorflow-gpu \
+    #tensorflow-gpu \
     jupyter uwsgi \
     && $CONDA_DIR/bin/conda clean --all -y \
-    && $CONDA_DIR/bin/conda create -p  $CONDA_DIR/envs/appenv \
+    && $CONDA_DIR/bin/conda create -p $CONDA_DIR/envs/appenv \
     && rm -rf /home/$CONTAINER_USER/.cache
 
 RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
@@ -122,4 +122,4 @@ CMD ["/opt/conda/bin/supervisord", "-c", "/etc/supervisord.conf"]
 COPY supervisord.conf /etc/supervisord.conf
 COPY uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY jupyter_notebook_config.py /etc/jupyter/
-COPY gpu_test $HOME
+COPY gpu_test.py $HOME
