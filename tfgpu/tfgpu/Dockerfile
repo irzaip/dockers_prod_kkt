@@ -118,9 +118,11 @@ WORKDIR $HOME
 
 USER root
 
+#ENTRYPOINT ["sudo", "-E"]
 CMD ["/opt/conda/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
 COPY supervisord.conf /etc/supervisord.conf
 COPY uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY jupyter_notebook_config.py /etc/jupyter/
 COPY gpu_test.py $HOME
+
