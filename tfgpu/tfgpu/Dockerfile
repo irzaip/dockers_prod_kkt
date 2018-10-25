@@ -92,10 +92,11 @@ RUN cd /tmp \
 RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && $CONDA_DIR/bin/conda config --add channels conda-forge \
     && $CONDA_DIR/bin/conda install --yes \
-    #tensorflow-gpu \
+    tensorflow-gpu \
     jupyter uwsgi \
     && $CONDA_DIR/bin/conda clean --all -y \
     && $CONDA_DIR/bin/conda create -p $CONDA_DIR/envs/appenv \
+    && sudo ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh \
     && rm -rf /home/$CONTAINER_USER/.cache
 
 RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
