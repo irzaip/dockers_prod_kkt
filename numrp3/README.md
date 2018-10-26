@@ -23,8 +23,19 @@ Using dumb-init and runit as service manager
 You can download and run this image with these commands:
 
 ```
-docker-compose build
-docker-compose up -d
+make
+make run
+make runmount (with mount, please edit Makefile)
+make bash
+make ssh (password: alpine)
+make mysql (password: mysql)
+make psql (password: tiger)
+make port
+make inspect
+make stop
+make remove
+make clean
+make list
 ```
 
 all done.
