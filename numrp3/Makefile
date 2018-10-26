@@ -28,7 +28,7 @@ inspect:
 
 .PHONY: ssh  # -- Login into docker container using ssh
 ssh:
-	@exec ssh -p 2222 root@localhost
+	@exec ssh -p 2222 alpine@localhost
 
 .PHONY: stop  # -- Stop docker running image and remove container
 stop:
