@@ -1,0 +1,4 @@
+#!/bin/sh
+
+#exec chpst -u cron svlogd -tt /var/log/cron/
+exec /usr/bin/logger -p daemon.notice -t cron

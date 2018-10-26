@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec /usr/bin/logger -p daemon.notice -t sshd
+#exec chpst -u sshd svlogd -tt /var/log/ssh/

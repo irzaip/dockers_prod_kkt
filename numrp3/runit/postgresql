@@ -1,0 +1,4 @@
+#!/bin/sh
+
+#exec su-exec postgres /usr/bin/postgres "$@"
+exec chpst -u postgres /usr/bin/postgres -k /tmp -h $HOSTNAME -p $PGPORT -D $PGDATA 2>&1

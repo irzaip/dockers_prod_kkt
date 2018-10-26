@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec chpst -u uwsgi svlogd -tt /var/log/uwsgi/
+#exec /usr/bin/logger -p daemon.notice -t uwsgi

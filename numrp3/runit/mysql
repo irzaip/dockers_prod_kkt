@@ -1,0 +1,9 @@
+#!/bin/sh -e
+
+# copies, stderr onto stdout
+exec 2>&1
+
+: ${defaults:="--defaults-file"}
+: ${MYCNF:="/etc/mysql/my.cnf"}
+
+exec /usr/bin/mysqld ${defaults}=${MYCNF} --user=mysql --console

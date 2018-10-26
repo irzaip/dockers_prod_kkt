@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Will generate host keys if they don't already exist
+/usr/bin/ssh-keygen -A
+
+exec /usr/sbin/sshd -De 2>&1
