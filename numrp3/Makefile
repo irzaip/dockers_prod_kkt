@@ -1,17 +1,21 @@
 
 ALL?=
+PS=$(shell docker ps -a | grep numrp3)
+LS=$(shell docker container ls | grep numrp3)
 
-.PHONY: build  # -- Build docker image from Dockerfile
+all : stop build
+
+.PHONY: build # -- Build docker image from Dockerfile
 build: 
 	@exec docker build --label numrp3 -t numrp3:dev .
 
 .PHONY: run  # -- Run docker image
 run:
-	@exec docker run --rm -d --name numrp3 -h numrp3.local -p 2222:22 -p 80:80 -p 443:443 -p 3306:3306 -p 5432:5432 -t numrp3:dev
+	@-exec docker run -d --rm --name numrp3 -h numrp3.local -p 2222:22 -p 80:80 -p 443:443 -p 3306:3306 -p 5432:5432 -t numrp3:dev
 
 .PHONY: runmount  # -- Run docker image
 runmount:
-	@exec docker run --rm -d --name numrp3 -h numrp3.local \
+	@-exec docker run -d --rm --name numrp3 -h numrp3.local \
 	-p 2222:22 -p 80:80 -p 443:443 -p 3306:3306 -p 5432:5432 \
 	--mount type=bind,source=/Users/bayu/appdata/docker/pg,target=/var/lib/postgresql/data \
 	--mount type=bind,source=/Users/bayu/appdata/docker/w3,target=/var/www \
@@ -20,45 +24,53 @@ runmount:
 
 .PHONY: bash  # -- Get into container bash terminal
 bash:
-	@exec docker exec -it numrp3 bash
+	@-exec docker exec -it numrp3 bash
 
 .PHONY: inspect  # -- Inspec container
 inspect: 
-	@exec docker inspect numrp3
+	@-exec docker inspect numrp3
 
 .PHONY: ssh  # -- Login into docker container using ssh
 ssh:
-	@exec ssh -p 2222 alpine@localhost
+	@-exec ssh -p 2222 alpine@localhost
 
 .PHONY: stop  # -- Stop docker running image and remove container
 stop:
-	@exec docker stop numrp3
-	@exec docker container rm numrp3
+ifneq ($(PS),)
+	@-exec docker stop numrp3
+endif
+	@-sleep 0
 
 .PHONY: clean  # -- Run docker system prune (add ALL=-a to prune all)
 clean: 
-	@exec docker system prune -f $(ALL)
+	@( read -p "[system prune -f] Are you sure?!? [y/N]: " sure && case "$$sure" in [yY]) true;; *) false;; esac )
+	@-exec docker system prune -f $(ALL)
 
-.PHONY: remove  # -- Remove this container
+.PHONY: remove  # -- Remove this image
 remove:
-	@exec docker rmi --force $(shell docker images -q numrp3 | uniq)
+	@( read -p "[docker rmi] Are you sure?!? [y/N]: " sure && case "$$sure" in [yY]) true;; *) false;; esac )
+	@-exec docker rmi --force $(shell docker images -q numrp3 | uniq)
 
 .PHONY: port  # -- check docker container expose port
 port:
-	@exec docker port numrp3
+	@-exec docker port numrp3
 
 .PHONY: mysql  # -- Connect to mysql server run in container
 mysql:
-	@exec mysql -h localhost -P 3306 --protocol=tcp -u root -p
+	@-exec mysql -h localhost -P 3306 --protocol=tcp -u root -p
 
 .PHONY: psql  # -- Connect to postgresql server run in container
 psql:
-	@exec psql -h localhost -p 5432 -U postgres
+	@-exec psql -h localhost -p 5432 -U postgres
 
 touch: SHELL:=/bin/bash
 touch:
-	touch --no-dereference "$@"
+	@-touch --no-dereference "$@"
 
 .PHONY: list
 list:
-	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1 \2/' | expand -t20
+	@-grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1 \2/' | expand -t20
+
+test:
+	@( read -p "Are you sure?!? [y/N]: " sure && case "$$sure" in [yY]) true;; *) false;; esac )
+	@-exit 1 ||:

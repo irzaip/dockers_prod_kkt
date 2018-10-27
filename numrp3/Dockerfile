@@ -32,7 +32,7 @@ RUN echo "Installing package" && \
 #    apk del .build-deps && \
 #    rm -rf /var/cache/apk/*
 
-ENV LANG en_US.utf8
+ENV LANG C.utf8
 ENV PGDATA /var/lib/postgresql/data
 ENV POSTGRES_PASSWORD "tiger"
 ENV ALPINE_PASSWORD "alpine"
