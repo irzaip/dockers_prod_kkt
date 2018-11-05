@@ -10,6 +10,7 @@ tfgpu/data/envs/**
 **/apps/titan
 **/apps/titano
 numrp3tf/data/cfg/nginx/disable
+numrp3tf/data/cfg/nginx/*.act
 numrp3tf/data/cfg/nginx/titan.conf
 numrp3tf/data/cfg/nginx/titano.conf
 numrp3tf/data/cfg/nginx/apps.titan.custom
@@ -17,7 +18,11 @@ numrp3tf/data/cfg/nginx/apps.titano.custom
 numrp3tf/data/cfg/uwsgi/titan.ini
 numrp3tf/data/cfg/uwsgi/titano.ini
 numrp3tf/data/cfg/uwsgi-opt.txt
-numrp3tf/data/key/google-service-key.json
+numrp3tf/data/cfg/ssh/**
+!numrp3tf/data/cfg/ssh/moduli
+!numrp3tf/data/cfg/ssh/ssh_config
+!numrp3tf/data/cfg/ssh/sshd_config
+numrp3tf/data/key/**
 numrp3tf/data/web/apps/test/__pycache__
 numrp3tf/data/web/apps/test2/__pycache__
 numrp3tf/data/web/apps/tftest/__pycache__
