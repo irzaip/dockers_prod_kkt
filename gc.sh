@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VMNAME="vmcentral"
+VMNAME="titano-cc"
 ZONE="us-central1-c"
 
 q="$(tr [A-Z] [a-z] <<< "$1")"
