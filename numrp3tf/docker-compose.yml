@@ -3,12 +3,12 @@ services:
 
   numrp3:
     image: numrp3:a-3.8
-    #container_name: titano_numrp3
+    # container_name: titano_numrp3
     build: numrp3/.
     stop_grace_period: 30s
     depends_on: 
       - tfgpu
-    #devices:
+    # devices:
     #  - /dev/video0:/dev/video0
     #  - /dev/snd:/dev/snd
     command: /bin/sh -c "envsubst < /etc/nginx/conf.d/templates/listen_plain.tpl > /etc/nginx/conf.d/listen_plain.act &&
@@ -47,7 +47,7 @@ services:
       - "${ADDR_BIND:-}:${PGSQL_PORT:-}:5432"
       - "${ADDR_BIND:-}:${HTTP_PORT:-}:80"
       - "${ADDR_BIND:-}:${HTTPS_PORT:-}:443"
-      #- "${ADDR_BIND:-}:8080:8080"
+      # - "${ADDR_BIND:-}:8080:8080"
       # - "${ADDR_BIND:-}:${UWSGI_PORTS:-}:3030-3040"
     restart: always
     dns:
@@ -60,9 +60,9 @@ services:
           - numrp3
 
   tfgpu:
-    #container_name: titano_tfgpu
+    # container_name: titano_tfgpu
     image: tfgpu:u-18.04
-    #runtime: nvidia
+    runtime: nvidia
     build: tfgpu/.
     stop_grace_period: 30s
     command: /bin/bash -c "[ -d /opt/conda/envs/appenv ] || /opt/conda/bin/conda create -y -p /opt/conda/envs/appenv &&
