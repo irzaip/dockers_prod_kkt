@@ -1,3 +1,28 @@
 ==> 2018-10-25 12:58:34 <==
 # cmd: /opt/conda/bin/conda create -p /opt/conda/envs/appenv
 # conda version: 4.5.11
+==> 2018-10-25 14:58:29 <==
+# cmd: /opt/conda/bin/conda install numpy
+# conda version: 4.5.11
++conda-forge::blas-1.1-openblas
++conda-forge::bzip2-1.0.6-h470a237_2
++conda-forge::ca-certificates-2018.10.15-ha4d7672_0
++conda-forge::certifi-2018.10.15-py37_1000
++conda-forge::libffi-3.2.1-hfc679d8_5
++conda-forge::libgcc-ng-7.2.0-hdf63c60_3
++conda-forge::libgfortran-3.0.0-1
++conda-forge::libstdcxx-ng-7.2.0-hdf63c60_3
++conda-forge::ncurses-6.1-hfc679d8_1
++conda-forge::numpy-1.15.3-py37_blas_openblashb06ca3d_0
++conda-forge::openblas-0.3.3-ha44fe06_1
++conda-forge::openssl-1.0.2p-h470a237_1
++conda-forge::pip-18.1-py37_1000
++conda-forge::python-3.7.0-h5001a0f_4
++conda-forge::readline-7.0-haf1bffa_1
++conda-forge::setuptools-40.4.3-py37_0
++conda-forge::sqlite-3.25.2-hb1c47c0_0
++conda-forge::tk-8.6.8-ha92aebf_0
++conda-forge::wheel-0.32.2-py37_0
++conda-forge::xz-5.2.4-h470a237_1
++conda-forge::zlib-1.2.11-h470a237_3
+# update specs: ['numpy']

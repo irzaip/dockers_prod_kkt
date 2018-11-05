@@ -15,11 +15,19 @@ fi
 
 set_logsvc() {
 	if grep -P '^(?=exec)(?=.*svlogd)' $1; then
-		if [ $2 == "mysql" ] || [ $2 == "postfix" ]; then
+		if [ $2 == "mysql" ]; then
 			mkdir -p /var/log/$2
+			chown $2.$2 /var/log/$2
+		elif [ $2 == "nginx" ]; then
 			chown $2.$2 /var/log/$2
 		fi
 		echo -e $CONFIGLOG > /var/log/$2/config
+	fi
+	if [ $2 == "mysql" ]; then
+		if [ ! -d /var/log/$2 ]; then
+			mkdir -p /var/log/$2
+			chown $2.$2 /var/log/$2
+		fi
 	fi
 }
 
@@ -28,7 +36,8 @@ set_svc() {
 	if [ $1 == "postgresql" ]; then
 		: ${PGDATA:="/var/lib/postgresql/data"}
 		#if [ -z "$(ls -A "$PGDATA")" ]; then
-		if [ ! -d $PGDATA ]; then
+		if [ ! -f $PGDATA/postgresql.conf ]; then
+			chown postgres:postgres ${PGDATA}
 			su-exec postgres /usr/bin/initdb
 			sed -ri "s/^#(listen_addresses\s*=\s*)\S+/\1'*'/" "$PGDATA"/postgresql.conf
 			: ${POSTGRES_USER:="postgres"}
@@ -73,12 +82,18 @@ set_svc() {
 		: ${MYSQL_USER_PWD:-}
 		: ${MYSQL_USER_DB:-}
 
+		if [ ! -d /var/run/${1}d ]; then
+			mkdir -p /var/run/${1}d
+			chmod -R 777 /var/run/${1}d
+			chown -R $1:$1 /var/run/${1}d
+		fi
 		if [ ! -d /var/lib/$1/$1 ]; then
 			echo "[i] MySQL data directory not found, creating initial DBs"
-			if [ ! -d /var/run/${1}d ]; then
-				mkdir -p /var/run/${1}d
-				chown -R $1.$1 /var/run/${1}d
-			fi
+			# fix volume permission error
+			#usermod -u 1000 $1
+			chmod -R 777 /var/lib/$1
+			chown -R $1:$1 /var/lib/$1
+
 			# init database
 			echo 'Initializing database'
 			mysql_install_db ${defaults}=${MYCNF} --user=$1 > /dev/null
@@ -119,42 +134,33 @@ EOF
 			rm -f $tfile
 		fi
 	elif [ $1 == "nginx" ]; then
-		if [ ! -f "/etc/$1/conf.d/default.conf.save" ]; then mv /etc/$1/conf.d/default.conf /etc/$1/conf.d/default.conf.save; fi
-		if [ ! -f /etc/$1/conf.d/apptest.conf ]; then cp $CFGDIR/apptest.conf /etc/$1/conf.d/; fi
-		if [ ! -d /etc/ssl/$1 ]; then
-			mkdir -p /etc/ssl/$1
-			chmod 755 /etc/ssl/$1
-			if [ ! -z $USEDHPARAM ]; then /usr/bin/openssl dhparam -out /etc/ssl/$1/dhparam.pem 2048; fi
-		fi
+		cp $CFGDIR/$1.conf /etc/$1/
+		chown $1.$1 /etc/$1/$1.conf
 		if [ ! -d /run/$1 ]; then
 			mkdir /run/$1
 			#chown $1.$1 /run/$1
 		fi
 	elif [ $1 == "uwsgi" ]; then
-		if [ ! -d /var/lib/nginx/html/wsgiapp ]; then
-			mkdir -p /var/lib/nginx/html/wsgiapp/apptest
-			cp $CFGDIR/apptest.py /var/lib/nginx/html/wsgiapp/apptest/
-			chown -R $1.$1 /var/lib/nginx/html/wsgiapp
-			chmod 755 /var/lib/nginx
-		fi
-		if [ ! -f /etc/$1/$1.ini.save ]; then
-			mv /etc/$1/$1.ini /etc/$1/$1.ini.save
-			cp $CFGDIR/$1.ini /etc/$1/$1.ini
-			chown $1.$1 /etc/$1/$1.ini
-			cp $CFGDIR/apptest.ini /etc/$1/conf.d/apptest.ini
-			chown $1.$1 /etc/$1/conf.d/apptest.ini
-		fi
+		if [ -f $CFGDIR/asyncio_plugin.so ]; then mv $CFGDIR/asyncio_plugin.so /usr/lib/uwsgi/; fi
+		if [ -f $CFGDIR/greenlet_plugin.so ]; then mv $CFGDIR/greenlet_plugin.so /usr/lib/uwsgi/; fi
+		#[ -d /etc/$1/conf.d ] || cp -R $CFGDIR/save/$1/* /etc/$1/
+		chown -R $1.$1 /var/www/html
+		chmod 755 /var/www
+		cp $CFGDIR/$1.ini /etc/$1/$1.ini
+		chown $1.$1 /etc/$1/$1.ini
 		if [ ! -d /run/$1 ]; then
 			mkdir /run/$1
 			chown $1.$1 /run/$1
 		fi
 	elif [ $1 == "ssh" ]; then
+		if [ ! -f /etc/$1/moduli ]; then
+		    cp $CFGDIR/{moduli,ssh_config,sshd_config} /etc/$1/
+		fi
     	# make sure we get fresh keys
     	rm -rf /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_dsa_key
     	ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
     	ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa
 		sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config
-		# echo "root:tiger" | chpasswd
 		sed -ie 's/#Port 22/Port 22/g' /etc/ssh/sshd_config
 		sed -ri 's/#HostKey \/etc\/ssh\/ssh_host_key/HostKey \/etc\/ssh\/ssh_host_key/g' /etc/ssh/sshd_config
 		sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_rsa_key/HostKey \/etc\/ssh\/ssh_host_rsa_key/g' /etc/ssh/sshd_config
@@ -164,6 +170,11 @@ EOF
 		/usr/bin/ssh-keygen -A
 	fi
 }
+
+if [ ! -z ${TZ} ]; then
+	cp /usr/share/zoneinfo/${TZ} /etc/localtime
+	echo "${TZ}" > /etc/timezone
+fi
 
 for i in $SRCDIR/*; do
 	fn=`basename $i`
@@ -175,10 +186,14 @@ for i in $SRCDIR/*; do
 		chmod +x /etc/sv/$svc/log/run
 		set_logsvc $i $svc
 	else
-		mkdir /etc/sv/$fn
+		mkdir -p /etc/sv/$fn
 		cp $SRCDIR/$fn /etc/sv/$fn/run
 		chmod +x /etc/sv/$fn/run
 		ln -s /etc/sv/$fn /etc/service/
 		set_svc $fn
 	fi
 done
+echo "alpine:$ALPINE_PASSWORD" | chpasswd
+rm -rf /opt/numrp3
+echo "#!/bin/bash" > /opt/init/init.sh
+echo "echo 'Init'" >> /opt/init/init.sh

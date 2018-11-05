@@ -1,0 +1,57 @@
+version: '3'
+services:
+
+  numrp3:
+    image: numrp3:3.8
+    build: .
+    stop_grace_period: 30s
+    #devices:
+    #  - /dev/video0:/dev/video0
+    #  - /dev/snd:/dev/snd
+    environment:
+      - TZ=${TZ:-Asia/Jakarta}
+      - ALPINE_PASSWORD=${ALPINE_PASSWORD:-alpine}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tiger}
+      - POSTGRES_DB=${POSTGRES_DB:-$POSTGRES_USER}
+      - MYSQL_ROOT_PWD=${MYSQL_ROOT_PWD:-mysql}
+      - MYSQL_USER=${MYSQL_USER:-}
+      - MYSQL_USER_PWD=${MYSQL_USER_PWD:-}
+      - MYSQL_USER_DB=${MYSQL_USER_DB:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+    volumes:
+      - ./data/ssl/:/etc/ssl/mail/
+      - ./data/cfg/uwsgi/:/etc/uwsgi/conf.d/
+      - ./data/cfg/ssh/:/etc/ssh/
+      - ./data/cfg/nginx/:/etc/nginx/conf.d/
+      - ./data/cfg/mysql/:/etc/mysql/conf.d/
+      - ./data/web/pyenvs/:/var/envs/
+      - ./data/web/apps/:/var/www/html/
+      - ./data/keys/:/var/keys/
+      - pgsql-vol-1:/var/lib/postgresql/data/
+      - mysql-vol-1:/var/lib/mysql/
+    ports:
+      - "${ADDR_BIND:-0.0.0.0}:${SSH_PORT:-2222}:${SSH_CPORT:-22}"
+      - "${ADDR_BIND:-0.0.0.0}:${MYSQL_PORT:-3306}:${MYSQL_CPORT:-3306}"
+      - "${ADDR_BIND:-0.0.0.0}:${PGSQL_PORT:-5432}:${PGSQL_CPORT:-5432}"
+      - "${ADDR_BIND:-0.0.0.0}:${HTTP_PORT:-80}:${HTTP_CPORT:-80}"
+      - "${ADDR_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:${HTTPS_CPORT:-443}"
+      - "${ADDR_BIND:-0.0.0.0}:${UWSGI_PORTS:-3030-3040}:${UWSGI_CPORTS:-3030-3040}"
+      - "${ADDR_BIND:-0.0.0.0}:5000:5000"
+    restart: always
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    hostname: numrp3.local
+    networks:
+      backnet:
+        aliases:
+          - numrp3
+
+networks:
+  backnet:
+    driver: bridge
+
+volumes:
+  mysql-vol-1:
+  pgsql-vol-1:

@@ -16,10 +16,17 @@ run:
 .PHONY: runmount  # -- Run docker image
 runmount:
 	@-exec docker run -d --rm --name numrp3 -h numrp3.local \
-	-p 2222:22 -p 80:80 -p 443:443 -p 3306:3306 -p 5432:5432 \
-	--mount type=bind,source=/Users/bayu/appdata/docker/pg,target=/var/lib/postgresql/data \
-	--mount type=bind,source=/Users/bayu/appdata/docker/w3,target=/var/www \
-	--mount type=bind,source=/Users/bayu/appdata/docker/cf,target=/etc/appcf \
+	-p 2222:22 -p 80:80 -p 443:443 -p 3306:3306 -p 5432:5432 -p 3030-3040:3030-3040 \
+	-v $(pwd)/data/ssl/:/etc/ssl/mail/ \
+	-v $(pwd)/data/cfg/uwsgi/:/etc/uwsgi/conf.d/ \
+	-v $(pwd)/data/cfg/ssh/:/etc/ssh/ \
+	-v $(pwd)/data/cfg/nginx/:/etc/nginx/conf.d/ \
+	-v $(pwd)/data/cfg/mysql/:/etc/mysql/conf.d/ \
+	-v $(pwd)/data/web/pyenvs/:/var/envs/ \
+	-v $(pwd)/data/web/apps/:/var/www/html/ \
+    -v $(pwd)/data/keys/:/var/keys/ \
+	-v pgsql-vol-1:/var/lib/postgresql/data/ \
+	-v mysql-vol-1:/var/lib/mysql/ \
 	-t numrp3:dev
 
 .PHONY: bash  # -- Get into container bash terminal
@@ -33,6 +40,10 @@ inspect:
 .PHONY: ssh  # -- Login into docker container using ssh
 ssh:
 	@-exec ssh -p 2222 alpine@localhost
+
+.PHONY: sftp  # -- Login into docker container using sftp
+sftp:
+	@-exec sftp -oPort=2222 alpine@localhost
 
 .PHONY: stop  # -- Stop docker running image and remove container
 stop:

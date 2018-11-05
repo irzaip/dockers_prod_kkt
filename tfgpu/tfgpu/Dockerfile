@@ -53,12 +53,6 @@ ENV LANGUAGE C.UTF-8
 ENV PATH=$CONDA_DIR/bin:$PATH
 ENV HOME=/home/$CONTAINER_USER
 
-# Configure Miniconda
-ENV MINICONDA_VER 4.5.11
-ENV MINICONDA Miniconda3-$MINICONDA_VER-Linux-x86_64.sh
-ENV MINICONDA_URL https://repo.continuum.io/miniconda/$MINICONDA
-ENV MINICONDA_MD5_SUM e1045ee415162f944b6aebfe560b8fee
-
 # Create user with UID=1000 and in the 'users' group
 RUN groupadd wheel -g 11 \
     && echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su \
@@ -73,6 +67,12 @@ RUN groupadd wheel -g 11 \
     && mkdir -p /etc/uwsgi/vassals /var/log/uwsgi /var/log/jupyter /var/log/supervisord \
     && chown -R root:supervisor /etc/uwsgi /var/log/uwsgi /var/log/jupyter /var/log/supervisord \
     && chmod 775 /var/log/uwsgi /var/log/jupyter /var/log/supervisord /var/run
+
+# Configure Miniconda
+ENV MINICONDA_VER 4.5.11
+ENV MINICONDA Miniconda3-$MINICONDA_VER-Linux-x86_64.sh
+ENV MINICONDA_URL https://repo.continuum.io/miniconda/$MINICONDA
+ENV MINICONDA_MD5_SUM e1045ee415162f944b6aebfe560b8fee
 
 USER $CONTAINER_USER
 
@@ -92,11 +92,13 @@ RUN cd /tmp \
 RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && $CONDA_DIR/bin/conda config --add channels conda-forge \
     && $CONDA_DIR/bin/conda install --yes \
-    tensorflow-gpu \
+    #tensorflow-gpu \
     jupyter uwsgi \
     && $CONDA_DIR/bin/conda clean --all -y \
     && $CONDA_DIR/bin/conda create -p $CONDA_DIR/envs/appenv \
     && sudo ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh \
+    && sudo mkdir -p /run/uwsgi \
+    && sudo chown -R ${CONTAINER_USER}:users /run/uwsgi \
     && rm -rf /home/$CONTAINER_USER/.cache
 
 RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
@@ -109,7 +111,8 @@ RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
     && cd $HOME \
     && mkdir -p $HOME/.local \
     && sudo rm -rf supervisor \
-    && echo ". /opt/conda/etc/profile.d/conda.sh" >> $HOME/.bashrc
+    && echo ". /opt/conda/etc/profile.d/conda.sh" >> $HOME/.bashrc \
+    && bash -c "source $HOME/.bashrc && source activate appenv && python -m ipykernel install --user --name appenv --display-name 'Python (appenv)'"
 
 ENV SV_PASSWORD "tiger"
 ENV GEN_CERT 1
@@ -126,4 +129,3 @@ COPY supervisord.conf /etc/supervisord.conf
 COPY uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY jupyter_notebook_config.py /etc/jupyter/
 COPY gpu_test.py $HOME
-

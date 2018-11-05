@@ -1,3 +1,4 @@
 #!/bin/sh
 
-exec chpst -u mysql svlogd -tt /var/log/mysql/
+exec /usr/bin/logger -p daemon.notice -t mysql
+#exec chpst -u mysql svlogd -tt /var/log/mysql/

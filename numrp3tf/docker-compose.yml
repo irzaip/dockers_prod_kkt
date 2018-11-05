@@ -1,0 +1,112 @@
+version: '3'
+services:
+
+  numrp3:
+    image: numrp3:a-3.8
+    #container_name: titano_numrp3
+    build: numrp3/.
+    stop_grace_period: 30s
+    depends_on: 
+      - tfgpu
+    #devices:
+    #  - /dev/video0:/dev/video0
+    #  - /dev/snd:/dev/snd
+    command: /bin/sh -c "envsubst < /etc/nginx/conf.d/templates/listen_plain.tpl > /etc/nginx/conf.d/listen_plain.act &&
+        envsubst < /etc/nginx/conf.d/templates/listen_ssl.tpl > /etc/nginx/conf.d/listen_ssl.act &&
+        envsubst < /etc/nginx/conf.d/templates/server_name.tpl > /etc/nginx/conf.d/server_name.act &&
+        /opt/init/init.sh && 
+        exec /sbin/runsvdir -P /etc/service"
+    environment:
+      - TZ=${TZ:-}
+      - ALPINE_PASSWORD=${ALPINE_PASSWORD:-}
+      - POSTGRES_USER=${POSTGRES_USER:-}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_DB=${POSTGRES_DB:-$POSTGRES_USER}
+      - MYSQL_ROOT_PWD=${MYSQL_ROOT_PWD:-}
+      - MYSQL_USER=${MYSQL_USER:-}
+      - MYSQL_USER_PWD=${MYSQL_USER_PWD:-}
+      - MYSQL_USER_DB=${MYSQL_USER_DB:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+      - HOSTNAME=${HOSTNAME}
+      - HTTP_PORT=${HTTP_PORT:-}
+      - HTTPS_PORT=${HTTPS_PORT:-}
+    volumes:
+      - ./data/key/:/var/keys/
+      - ./data/ssl/:/etc/ssl/private/
+      - ./data/cfg/uwsgi/:/etc/uwsgi/conf.d/
+      - ./data/cfg/ssh/:/etc/ssh/
+      - ./data/cfg/nginx/:/etc/nginx/conf.d/
+      - ./data/cfg/mysql/:/etc/mysql/conf.d/
+      - ./data/web/pyenvs/:/var/envs/
+      - ./data/web/apps/:/var/www/html/
+      - pgsql:/var/lib/postgresql/data/
+      - mysql:/var/lib/mysql/
+    ports:
+      - "${ADDR_BIND:-}:${SSH_PORT:-}:22"
+      - "${ADDR_BIND:-}:${MYSQL_PORT:-}:3306"
+      - "${ADDR_BIND:-}:${PGSQL_PORT:-}:5432"
+      - "${ADDR_BIND:-}:${HTTP_PORT:-}:80"
+      - "${ADDR_BIND:-}:${HTTPS_PORT:-}:443"
+      #- "${ADDR_BIND:-}:8080:8080"
+      # - "${ADDR_BIND:-}:${UWSGI_PORTS:-}:3030-3040"
+    restart: always
+    dns:
+      - ${DNS_1:-}
+      - ${DNS_2:-}
+    hostname: ${HOSTNAME:-}
+    networks:
+      titan:
+        aliases:
+          - numrp3
+
+  tfgpu:
+    #container_name: titano_tfgpu
+    image: tfgpu:u-18.04
+    #runtime: nvidia
+    build: tfgpu/.
+    stop_grace_period: 30s
+    command: /bin/bash -c "[ -d /opt/conda/envs/appenv ] || /opt/conda/bin/conda create -y -p /opt/conda/envs/appenv &&
+      exec /opt/conda/bin/supervisord -c /etc/supervisord.conf"
+    environment:
+      - TZ=${TZ:-}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-}
+      - NVIDIA_REQUIRE_CUDA=${NVIDIA_REQUIRE_CUDA:-}
+      - CONTAINER_USER=${CONTAINER_USER:-}
+      - SV_PASSWORD=${SV_PASSWORD:-}
+      - GEN_CERT=${GEN_CERT:-0}
+    volumes:
+      - ./data/cfg/uwsgi2/:/etc/uwsgi/vassals/
+      - ./data/cfg/supervisor/supervisord.conf:/etc/supervisord.conf
+      - ./data/cfg/jupyter/:/etc/jupyter
+      - ./data/key/:/var/keys/
+      - ./data/web/apps/:/home/ubuntu/webapp/
+      - ./data/web/nbooks/:/home/ubuntu/notebook/
+      - ./data/web/pyenvs/:/opt/conda/envs/
+    ports:
+      - "${ADDR_BIND:-}:${SUPERVISOR_PORT:-}:9001"
+      - "${ADDR_BIND:-}:${JUPYTER_PORT:-}:8888"
+      # - "${ADDR_BIND:-}:${UWSGI2_PORTS:-}:5001-5009"
+    restart: always
+    dns:
+      - ${DNS_1:-}
+      - ${DNS_2:-}
+    hostname: tfgpu.local
+    networks:
+      titan:
+        aliases:
+          - tfgpu
+
+networks:
+  titan:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${IPV4_NETWORK:-}.0/24 
+        - subnet: ${IPV6_NETWORK:-fdb5:fbad:3200:800a::/64}
+
+volumes:
+  pgsql:
+  mysql:
+  redis:

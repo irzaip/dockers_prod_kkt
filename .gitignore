@@ -2,3 +2,10 @@
 **/.DS_Store
 bit-miniml
 base-notebook
+alpor
+extsrc
+emsdk
+tfgpu/data/envs/**
+**/pyenvs/**
+**/apps/titan
+**/apps/titano
