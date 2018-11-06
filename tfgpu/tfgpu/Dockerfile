@@ -100,6 +100,7 @@ RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && sudo ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh \
     && sudo mkdir -p /run/uwsgi \
     && sudo chown -R ${CONTAINER_USER}:users /run/uwsgi \
+    && sudo chown -R ${CONTAINER_USER}:users $CONDA_DIR/envs/appenv \
     && rm -rf /home/$CONTAINER_USER/.cache
 
 RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
