@@ -20,7 +20,8 @@ sudo apt update
 sudo apt install -y docker-ce
 # install docker-compose
 # sudo apt  install -y docker-compose
-sudo curl -L "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+COMPOSE_VER=1.21.2
+sudo curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VER}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 # install json manipulation shell jq
 sudo apt install -y jq
