@@ -27,6 +27,7 @@ sudo apt install -y jq
 sudo apt autoremove -y
 sudo systemctl restart docker
 
+DEBIAN_FRONTEND=noninteractive
 # install nvidia-docker2 docker plugin
 NVIDIA=
 while true
