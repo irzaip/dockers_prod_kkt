@@ -37,7 +37,7 @@ ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
 
 LABEL maintainer "bayu ir  <bayu.irian@gmail.com>"
 
-RUN apt-get update && apt-get install -y --no-install-recommends bzip2 curl git sudo \
+RUN apt-get update && apt-get install -y --no-install-recommends bzip2 curl git sudo locales \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure environment
@@ -92,6 +92,7 @@ RUN cd /tmp \
 RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && $CONDA_DIR/bin/conda config --add channels conda-forge \
     && $CONDA_DIR/bin/conda install --yes \
+    python==3.6.6 \
     #tensorflow-gpu \
     jupyter uwsgi \
     && $CONDA_DIR/bin/conda clean --all -y \
@@ -112,7 +113,7 @@ RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
     && mkdir -p $HOME/.local \
     && sudo rm -rf supervisor \
     && echo ". /opt/conda/etc/profile.d/conda.sh" >> $HOME/.bashrc \
-    && bash -c "source $HOME/.bashrc && source activate appenv && python -m ipykernel install --user --name appenv --display-name 'Python (appenv)'"
+    && bash -c "source $HOME/.bashrc && source activate /opt/conda/envs/appenv && python -m ipykernel install --user --name appenv --display-name 'Python (appenv)'"
 
 ENV SV_PASSWORD "tiger"
 ENV GEN_CERT 1

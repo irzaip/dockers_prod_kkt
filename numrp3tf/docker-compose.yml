@@ -68,6 +68,8 @@ services:
     command: /bin/bash -c "[ -d /opt/conda/envs/appenv ] || /opt/conda/bin/conda create -y -p /opt/conda/envs/appenv &&
       exec /opt/conda/bin/supervisord -c /etc/supervisord.conf"
     environment:
+      - LC_ALL=en_US.UTF-8
+      - LANG=en_US.UTF-8
       - TZ=${TZ:-}
       - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-}
       - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-}
