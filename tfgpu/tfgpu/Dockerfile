@@ -37,7 +37,7 @@ ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
 
 LABEL maintainer "bayu ir  <bayu.irian@gmail.com>"
 
-RUN apt-get update && apt-get install -y --no-install-recommends bzip2 curl git sudo locales \
+RUN apt-get update && apt-get install -y --no-install-recommends bzip2 curl git sudo locales jq moreutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure environment
@@ -101,9 +101,11 @@ RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && sudo mkdir -p /run/uwsgi \
     && sudo chown -R ${CONTAINER_USER}:users /run/uwsgi \
     && sudo chown -R ${CONTAINER_USER}:users $CONDA_DIR/envs/appenv \
-    && rm -rf /home/$CONTAINER_USER/.cache
-
-RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
+    && cp -R $CONDA_DIR/share/jupyter/kernels/python3 $CONDA_DIR/share/jupyter/kernels/appenv \
+    && jq '.argv[0]="/opt/conda/envs/appenv/bin/python" | .display_name="Python 3 (appenv)"' $CONDA_DIR/share/jupyter/kernels/appenv/kernel.json | sponge $CONDA_DIR/share/jupyter/kernels/appenv/kernel.json \
+    && rm -rf /home/$CONTAINER_USER/.cache \
+    && echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> $HOME/.bashrc \
+    && yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
     && yes | $CONDA_DIR/bin/pip install --no-cache-dir pillow \
     && cd $HOME \
     && git clone https://github.com/Supervisor/supervisor.git \
@@ -111,10 +113,11 @@ RUN yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
     && $CONDA_DIR/bin/python setup.py build \
     && sudo $CONDA_DIR/bin/python setup.py install \
     && cd $HOME \
-    && mkdir -p $HOME/.local \
     && sudo rm -rf supervisor \
-    && echo ". /opt/conda/etc/profile.d/conda.sh" >> $HOME/.bashrc \
-    && bash -c "source $HOME/.bashrc && source activate /opt/conda/envs/appenv && python -m ipykernel install --user --name appenv --display-name 'Python (appenv)'"
+    # && mkdir -p $HOME/.local \
+    # && bash -c "source $HOME/.bashrc && source activate $CONDA_DIR/envs/appenv \
+    # && python -m ipykernel install --user --name appenv --display-name 'Python (appenv)'" \
+    && echo
 
 ENV SV_PASSWORD "tiger"
 ENV GEN_CERT 1

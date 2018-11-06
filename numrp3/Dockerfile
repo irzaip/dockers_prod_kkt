@@ -22,7 +22,7 @@ WORKDIR /
 RUN echo "Installing package" \
     && apk update \
     && apk add --no-cache \
-    dumb-init runit su-exec sudo screen shadow \
+    dumb-init runit su-exec sudo screen shadow jq \
     curl bash grep gawk bc psmisc \
     openssl ca-certificates \
     openssh memcached redis \
