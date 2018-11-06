@@ -84,18 +84,14 @@ RUN cd /tmp \
     && echo "$MINICONDA_MD5_SUM  miniconda.sh" | md5sum -c - \
     && /bin/bash miniconda.sh -f -b -p $CONDA_DIR \
     && rm miniconda.sh \
-    && $CONDA_DIR/bin/conda install --yes conda==$MINICONDA_VER \
-    && $CONDA_DIR/bin/conda update --all --quiet --yes \
-    && $CONDA_DIR/bin/conda clean --all -y \
-    && rm -rf /home/$CONTAINER_USER/.cache/yarn
-
-RUN $CONDA_DIR/bin/conda upgrade -y pip \
     && $CONDA_DIR/bin/conda config --add channels conda-forge \
     && $CONDA_DIR/bin/conda install --yes \
+    conda==$MINICONDA_VER \
     python==3.6.6 \
-    #tensorflow-gpu \
     jupyter uwsgi \
+    && $CONDA_DIR/bin/conda update --all --quiet --yes \
     && $CONDA_DIR/bin/conda clean --all -y \
+    && rm -rf /home/$CONTAINER_USER/.cache/yarn \
     && $CONDA_DIR/bin/conda create -p $CONDA_DIR/envs/appenv \
     && sudo ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh \
     && sudo mkdir -p /run/uwsgi \
