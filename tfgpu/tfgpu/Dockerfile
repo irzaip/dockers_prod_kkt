@@ -15,7 +15,7 @@ ENV CUDA_VERSION 9.2.148
 
 ENV CUDA_PKG_VERSION 9-2=$CUDA_VERSION-1
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        cuda-cudart-$CUDA_PKG_VERSION && \
+    cuda-cudart-$CUDA_PKG_VERSION && \
     ln -s cuda-9.2 /usr/local/cuda && \
     rm -rf /var/lib/apt/lists/*
 
@@ -37,18 +37,20 @@ ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
 
 LABEL maintainer "bayu ir  <bayu.irian@gmail.com>"
 
-RUN apt-get update && apt-get install -y --no-install-recommends bzip2 curl git sudo locales jq moreutils \
+RUN apt-get update \
+    && apt upgrade -y \
+    && apt install -y --no-install-recommends nano vim-tiny openssh-client mime-support bzip2 curl git sudo locales jq moreutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure environment
-ENV CONDA_DIR /opt/conda
-ENV SHELL /bin/bash
-ENV CONTAINER_USER ubuntu
-ENV CONTAINER_UID 1000
-ENV CONTAINER_GID 100
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
-ENV LANGUAGE C.UTF-8
+ENV CONDA_DIR=/opt/conda \
+    SHELL=/bin/bash \
+    CONTAINER_USER=ubuntu \
+    CONTAINER_UID=1000 \
+    CONTAINER_GID=100 \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8 \
+    LANGUAGE=C.UTF-8
 
 ENV PATH=$CONDA_DIR/bin:$PATH
 ENV HOME=/home/$CONTAINER_USER
@@ -64,9 +66,14 @@ RUN groupadd wheel -g 11 \
     && mkdir -p $CONDA_DIR \
     && chown $CONTAINER_USER:$CONTAINER_GID $CONDA_DIR \
     && chmod g+w /etc/passwd \
-    && mkdir -p /etc/uwsgi/vassals /var/log/uwsgi /var/log/jupyter /var/log/supervisord \
-    && chown -R root:supervisor /etc/uwsgi /var/log/uwsgi /var/log/jupyter /var/log/supervisord \
-    && chmod 775 /var/log/uwsgi /var/log/jupyter /var/log/supervisord /var/run
+    && mkdir -p /etc/uwsgi/vassals /run/uwsgi /var/log/uwsgi /var/log/jupyter /var/log/supervisord /var/log/oauth2_proxy \
+    && chown -R root:supervisor /etc/uwsgi /var/log/uwsgi /var/log/jupyter /var/log/supervisord /var/log/oauth2_proxy \
+    && chmod 775 /var/log/uwsgi /var/log/jupyter /var/log/supervisord /var/log/oauth2_proxy /var/run \
+    && chown -R ${CONTAINER_USER}:users /run/uwsgi \
+    && cd /tmp \
+    && curl -L https://github.com/bitly/oauth2_proxy/releases/download/v2.2/oauth2_proxy-2.2.0.linux-amd64.go1.8.1.tar.gz -o oauth.tar.gz \
+    && tar -C /usr/local/bin -xzf oauth.tar.gz --strip-components=1 \
+    && rm -f oauth.tar.gz
 
 # Configure Miniconda
 ENV MINICONDA_VER 4.5.11
@@ -78,7 +85,6 @@ USER $CONTAINER_USER
 
 # Install conda
 RUN cd /tmp \
-    && mkdir -p $HOME/webapp \
     && mkdir -p $CONDA_DIR \
     && curl -L $MINICONDA_URL -o miniconda.sh \
     && echo "$MINICONDA_MD5_SUM  miniconda.sh" | md5sum -c - \
@@ -91,25 +97,21 @@ RUN cd /tmp \
     jupyter uwsgi \
     && $CONDA_DIR/bin/conda update --all --quiet --yes \
     && $CONDA_DIR/bin/conda clean --all -y \
-    && rm -rf /home/$CONTAINER_USER/.cache/yarn \
-    && $CONDA_DIR/bin/conda create -p $CONDA_DIR/envs/appenv \
     && sudo ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh \
-    && sudo mkdir -p /run/uwsgi \
-    && sudo chown -R ${CONTAINER_USER}:users /run/uwsgi \
-    && sudo chown -R ${CONTAINER_USER}:users $CONDA_DIR/envs/appenv \
+    && echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> $HOME/.bashrc \
+    && $CONDA_DIR/bin/conda create -p $CONDA_DIR/envs/appenv \
+    # && sudo chown -R ${CONTAINER_USER}:users $CONDA_DIR/envs/appenv \
     && cp -R $CONDA_DIR/share/jupyter/kernels/python3 $CONDA_DIR/share/jupyter/kernels/appenv \
     && jq '.argv[0]="/opt/conda/envs/appenv/bin/python" | .display_name="Python 3 (appenv)"' $CONDA_DIR/share/jupyter/kernels/appenv/kernel.json | sponge $CONDA_DIR/share/jupyter/kernels/appenv/kernel.json \
+    # && yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
+    # && yes | $CONDA_DIR/bin/pip install --no-cache-dir pillow \
     && rm -rf /home/$CONTAINER_USER/.cache \
-    && echo ". $CONDA_DIR/etc/profile.d/conda.sh" >> $HOME/.bashrc \
-    && yes | $CONDA_DIR/bin/pip install --no-cache-dir --upgrade pip \
-    && yes | $CONDA_DIR/bin/pip install --no-cache-dir pillow \
-    && cd $HOME \
     && git clone https://github.com/Supervisor/supervisor.git \
     && cd supervisor \
     && $CONDA_DIR/bin/python setup.py build \
     && sudo $CONDA_DIR/bin/python setup.py install \
-    && cd $HOME \
-    && sudo rm -rf supervisor \
+    && mkdir -p $HOME/webapp \
+    && sudo rm -rf $(pwd) \
     # && mkdir -p $HOME/.local \
     # && bash -c "source $HOME/.bashrc && source activate $CONDA_DIR/envs/appenv \
     # && python -m ipykernel install --user --name appenv --display-name 'Python (appenv)'" \
@@ -123,10 +125,10 @@ WORKDIR $HOME
 
 USER root
 
-#ENTRYPOINT ["sudo", "-E"]
+# ENTRYPOINT ["sudo", "-E"]
 CMD ["/opt/conda/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
 COPY supervisord.conf /etc/supervisord.conf
 COPY uwsgi.ini /etc/uwsgi/uwsgi.ini
 COPY jupyter_notebook_config.py /etc/jupyter/
-COPY gpu_test.py $HOME
+COPY gpu_test.py $HOME/webapp

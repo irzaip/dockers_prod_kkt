@@ -56,24 +56,24 @@ services:
     hostname: ${HOSTNAME:-}
     networks:
       titan:
+        ipv4_address: ${IPV4_NETWORK:-}.10
         aliases:
           - numrp3
 
   tfgpu:
     # container_name: titano_tfgpu
     image: tfgpu:u-18.04
-    runtime: nvidia
+    runtime: ${RUNTIME:-}
     build: tfgpu/.
     stop_grace_period: 30s
     command: /bin/bash -c "[ -d /opt/conda/envs/appenv ] || /opt/conda/bin/conda create -y -p /opt/conda/envs/appenv &&
       exec /opt/conda/bin/supervisord -c /etc/supervisord.conf"
     environment:
-      - LC_ALL=en_US.UTF-8
-      - LANG=en_US.UTF-8
       - TZ=${TZ:-}
       - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-}
       - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-}
       - NVIDIA_REQUIRE_CUDA=${NVIDIA_REQUIRE_CUDA:-}
+      - OAUTH2_PROXY_ARGS=${OAUTH2_PROXY_ARGS:-}
       - CONTAINER_USER=${CONTAINER_USER:-}
       - SV_PASSWORD=${SV_PASSWORD:-}
       - GEN_CERT=${GEN_CERT:-0}
@@ -81,13 +81,16 @@ services:
       - ./data/cfg/uwsgi2/:/etc/uwsgi/vassals/
       - ./data/cfg/supervisor/supervisord.conf:/etc/supervisord.conf
       - ./data/cfg/jupyter/:/etc/jupyter
+      - ./data/ssl/:/etc/ssl/private/
       - ./data/key/:/var/keys/
+      - ./data/key/oauth2_proxy.cfg:/etc/oauth2_proxy.cfg
       - ./data/web/apps/:/home/ubuntu/webapp/
       - ./data/web/nbooks/:/home/ubuntu/notebook/
       - ./data/web/pyenvs/:/opt/conda/envs/
     ports:
       - "${ADDR_BIND:-}:${SUPERVISOR_PORT:-}:9001"
       - "${ADDR_BIND:-}:${JUPYTER_PORT:-}:8888"
+      - "${ADDR_BIND:-}:5000:5000"
       # - "${ADDR_BIND:-}:${UWSGI2_PORTS:-}:5001-5009"
     restart: always
     dns:
@@ -96,6 +99,7 @@ services:
     hostname: tfgpu.local
     networks:
       titan:
+        ipv4_address: ${IPV4_NETWORK:-}.20
         aliases:
           - tfgpu
 
