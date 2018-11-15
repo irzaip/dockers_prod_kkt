@@ -1,5 +1,7 @@
 numrp3tf/data/web/apps/cache/*
-numrp3tf/data/web/apps/cipijs/*
+numrp3tf/data/web/apps/cipijs/**
+numrp3tf/data/web/apps/cipijs/.gitignore
+
 numrp3tf/data/cfg/ssh/ssh_host**
 
 numrp3tf/**/*.pem
